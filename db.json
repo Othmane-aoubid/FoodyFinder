@@ -1,0 +1,52 @@
+{
+  "restaurants": [
+    {
+      "id": 1,
+      "name": "Pizza Palace",
+      "cuisine": "italian",
+      "distance": 3.2
+    },
+    {
+      "id": 2,
+      "name": "Dragon Wok",
+      "cuisine": "chinese",
+      "distance": 7.8
+    },
+    {
+      "id": 3,
+      "name": "Taj Mahal",
+      "cuisine": "indian",
+      "distance": 4.5
+    },
+    {
+      "id": 4,
+      "name": "El Mariachi",
+      "cuisine": "mexican",
+      "distance": 12.1
+    },
+    {
+      "id": 5,
+      "name": "Pasta Paradise",
+      "cuisine": "italian",
+      "distance": 8.9
+    },
+    {
+      "id": 6,
+      "name": "Sichuan House",
+      "cuisine": "chinese",
+      "distance": 2.7
+    },
+    {
+      "id": 7,
+      "name": "Spice Route",
+      "cuisine": "indian",
+      "distance": 6.3
+    },
+    {
+      "id": 8,
+      "name": "Taco Fiesta",
+      "cuisine": "mexican",
+      "distance": 9.4
+    }
+  ]
+} 
