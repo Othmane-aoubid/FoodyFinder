@@ -12,14 +12,39 @@ import {
   CardHeader,
   CardTitle,
 } from "./components/ui/card";
+import  RestaurantList  from "./components/ui/RestaurantList";
 
 export default function RestaurantFinder() {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [lat, setLat] = useState("37.7786357"); // Default lat
-  const [lng, setLng] = useState("-122.3918135"); // Default lng
-  const [searchTerm, setSearchTerm] = useState("");
+  const [lat, setLat] = useState(
+    () => localStorage.getItem("lat") || "37.7786357"
+  );
+  const [lng, setLng] = useState(
+    () => localStorage.getItem("lng") || "-122.3918135"
+  );
+  const [searchTerm, setSearchTerm] = useState(
+    () => localStorage.getItem("searchTerm") || ""
+  );
+
+  const handleLatChange = (e) => {
+    const value = e.target.value;
+    setLat(value);
+    localStorage.setItem("lat", value);
+  };
+
+  const handleLngChange = (e) => {
+    const value = e.target.value;
+    setLng(value);
+    localStorage.setItem("lng", value);
+  };
+
+  const handleSearchTermChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    localStorage.setItem("searchTerm", value);
+  };
 
   const searchRestaurants = async (e) => {
     e.preventDefault();
@@ -33,20 +58,18 @@ export default function RestaurantFinder() {
 
       console.log(response.data);
 
-      // Map the Spoonacular API response structure
+      // Map the API response to include the correct image URLs
       const restaurants = response.data.restaurants.map((item) => ({
-        id: item._id,
+        _id: item._id,
         name: item.name,
-        image_url: item.image_url || "default-restaurant-image.jpg",
-        rating: item.weighted_rating_value || 0,
-        review_count: item.reviews_count || 0,
-        price: item.price_range || "$$",
-        categories: [{ title: item.cuisine || "Various" }],
-        location: {
-          address1: `${item.address.street_addr}, ${item.address.city}, ${item.address.state} ${item.address.zipcode}`,
-        },
-        phone: item.phone_number || "-",
-        url: item.website || "#",
+        food_photos: item.food_photos || [],
+        logo_photos: item.logo_photos || [],
+        store_photos: item.store_photos || [],
+        weighted_rating_value: item.weighted_rating_value || 0,
+        dollar_signs: item.dollar_signs || 2,
+        cuisines: item.cuisines || ["Various"],
+        address: item.address || {},
+        phone_number: item.phone_number || "-",
       }));
 
       setRestaurants(restaurants);
@@ -78,7 +101,7 @@ export default function RestaurantFinder() {
                   type="text"
                   placeholder="Search for cuisine or restaurant..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={handleSearchTermChange}
                   className="pl-10"
                 />
               </div>
@@ -90,7 +113,7 @@ export default function RestaurantFinder() {
                     step="any"
                     placeholder="Latitude (e.g., 37.7786357)"
                     value={lat}
-                    onChange={(e) => setLat(e.target.value)}
+                    onChange={handleLatChange}
                     className="pl-10"
                     required
                   />
@@ -102,7 +125,7 @@ export default function RestaurantFinder() {
                     step="any"
                     placeholder="Longitude (e.g., -122.3918135)"
                     value={lng}
-                    onChange={(e) => setLng(e.target.value)}
+                    onChange={handleLngChange}
                     className="pl-10"
                     required
                   />
@@ -137,83 +160,23 @@ export default function RestaurantFinder() {
           </div>
         )}
 
-        {/* Restaurant Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {restaurants.map((restaurant) => (
-            <Card
-              key={restaurant.id}
-              className="overflow-hidden hover:shadow-lg transition-shadow duration-300"
-            >
-              <div className="relative">
-                <img
-                  src={restaurant.image_url}
-                  alt={restaurant.name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-0 right-0 bg-blue-600 text-white px-3 py-1 rounded-bl-lg">
-                  {restaurant.price || "$$"}
-                </div>
-              </div>
-              <CardHeader>
-                <CardTitle className="text-2xl hover:text-blue-600 transition-colors">
-                  {restaurant.name}
-                </CardTitle>
-                <div className="flex items-center">
-                  <div className="flex text-yellow-400">
-                    {[...Array(Math.round(restaurant.rating))].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 fill-current" />
-                    ))}
-                  </div>
-                  <span className="text-gray-600 ml-2 text-sm">
-                    ({restaurant.review_count} reviews)
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-gray-600">
-                  <div className="flex items-center">
-                    <Utensils className="mr-2 text-blue-600 h-4 w-4" />
-                    <span>
-                      {restaurant.categories.map((c) => c.title).join(", ")}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <MapPin className="mr-2 text-blue-600 h-4 w-4" />
-                    <span>{restaurant.location.address1}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Phone className="mr-2 text-blue-600 h-4 w-4" />
-                    <span>{restaurant.phone}</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button asChild className="w-full">
-                  <a
-                    href={restaurant.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    View on Yelp
-                  </a>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+            <p className="mt-2 text-gray-600">Loading restaurants...</p>
+          </div>
+        )}
 
-        {/* No Results Message */}
-        {!loading && restaurants.length === 0 && (
-          <div className="text-center py-16">
-            <div className="text-gray-400 text-6xl mb-4">
-              <Utensils className="mx-auto h-16 w-16" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">
-              No restaurants found
-            </h3>
-            <p className="text-gray-500">
-              Try searching for a location to discover great restaurants!
-            </p>
+        {/* Restaurant List */}
+        {!loading && !error && restaurants.length > 0 && (
+          <RestaurantList restaurants={restaurants} />
+        )}
+
+        {/* No Results */}
+        {!loading && !error && restaurants.length === 0 && (
+          <div className="text-center py-8 text-gray-600">
+            No restaurants found. Try adjusting your search.
           </div>
         )}
       </main>
