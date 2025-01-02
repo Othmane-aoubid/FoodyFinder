@@ -12,7 +12,7 @@ export default function RestaurantFinder() {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   const [foodType, setFoodType] = useState("");
-  const [cuisineType, setCuisineType] = useState("");
+  const [cuisineType, setCuisineType] = useState("other");
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
   const API_KEY = "d653631d5cmsh0c80dc042132107p1e48e1jsnd35db403294e";
@@ -83,7 +83,7 @@ export default function RestaurantFinder() {
       const matchesName = restaurant.name && restaurant.name.toLowerCase().includes(lowerCaseTerm);
       const matchesLocation = restaurant.location && restaurant.location.toLowerCase().includes(lowerCaseLocation);
       const matchesFoodType = restaurant.foodType && restaurant.foodType.toLowerCase().includes(lowerCaseFoodType);
-      const matchesCuisineType = restaurant.cuisine && restaurant.cuisine.toLowerCase().includes(lowerCaseCuisineType);
+      const matchesCuisineType = cuisineType === "other" || (restaurant.cuisine && restaurant.cuisine.toLowerCase().includes(lowerCaseCuisineType));
       return matchesName || matchesLocation || matchesFoodType || matchesCuisineType;
     });
   };
@@ -122,7 +122,7 @@ export default function RestaurantFinder() {
           onChange={(e) => setCuisineType(e.target.value)}
           className="border p-2 rounded flex-1"
         >
-          <option value="">Select Cuisine Type</option>
+          <option value="other">Other (Show All)</option>
           <option value="american">American</option>
           <option value="italian">Italian</option>
           <option value="japanese">Japanese</option>
