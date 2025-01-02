@@ -12,6 +12,7 @@ export default function RestaurantFinder() {
   const [searchTerm, setSearchTerm] = useState("");
   const [location, setLocation] = useState("");
   const [foodType, setFoodType] = useState("");
+  const [cuisineType, setCuisineType] = useState("");
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
   const API_KEY = "d653631d5cmsh0c80dc042132107p1e48e1jsnd35db403294e";
@@ -23,7 +24,7 @@ export default function RestaurantFinder() {
     setError(null);
 
     try {
-      const query = `${searchTerm} ${location} ${foodType}`.trim();
+      const query = `${searchTerm} ${location} ${foodType} ${cuisineType}`.trim();
       const response = await axios.get(
         `https://${API_HOST}/api/places/search`,
         {
@@ -72,20 +73,22 @@ export default function RestaurantFinder() {
     }
   };
 
-  const filterRestaurants = (restaurants, searchTerm, location, foodType) => {
+  const filterRestaurants = (restaurants, searchTerm, location, foodType, cuisineType) => {
     const lowerCaseTerm = searchTerm.toLowerCase();
     const lowerCaseLocation = location.toLowerCase();
     const lowerCaseFoodType = foodType.toLowerCase();
+    const lowerCaseCuisineType = cuisineType.toLowerCase();
 
     return restaurants.filter((restaurant) => {
       const matchesName = restaurant.name && restaurant.name.toLowerCase().includes(lowerCaseTerm);
       const matchesLocation = restaurant.location && restaurant.location.toLowerCase().includes(lowerCaseLocation);
       const matchesFoodType = restaurant.foodType && restaurant.foodType.toLowerCase().includes(lowerCaseFoodType);
-      return matchesName || matchesLocation || matchesFoodType;
+      const matchesCuisineType = restaurant.cuisine && restaurant.cuisine.toLowerCase().includes(lowerCaseCuisineType);
+      return matchesName || matchesLocation || matchesFoodType || matchesCuisineType;
     });
   };
 
-  const filteredRestaurants = filterRestaurants(restaurants, searchTerm, location, foodType);
+  const filteredRestaurants = filterRestaurants(restaurants, searchTerm, location, foodType, cuisineType);
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
@@ -114,6 +117,20 @@ export default function RestaurantFinder() {
           placeholder="Enter food type (e.g., Sushi)"
           className="border p-2 rounded flex-1"
         />
+        <select
+          value={cuisineType}
+          onChange={(e) => setCuisineType(e.target.value)}
+          className="border p-2 rounded flex-1"
+        >
+          <option value="">Select Cuisine Type</option>
+          <option value="american">American</option>
+          <option value="italian">Italian</option>
+          <option value="japanese">Japanese</option>
+          <option value="chinese">Chinese</option>
+          <option value="turkish">Turkish</option>
+          <option value="indian">Indian</option>
+          <option value="mexican">Mexican</option>
+        </select>
         <button
           type="submit"
           className="bg-blue-500 text-white rounded px-4 py-2"

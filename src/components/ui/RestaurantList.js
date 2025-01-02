@@ -16,7 +16,7 @@ const RestaurantList = ({ restaurants, onSelect }) => {
             >
               <div className="relative">
                 <img
-                  src={restaurant.cover_photo || "/placeholder-image.jpg"}
+                  src={restaurant.cover_photo}
                   alt={restaurant.name}
                   className="w-full h-48 object-cover"
                 />
