@@ -9,6 +9,8 @@
     "clsx": "^2.1.1",
     "cra-template": "1.2.0",
     "lucide-react": "^0.469.0",
+    "path-browserify": "^1.0.1",
+    "quickscraper-sdk": "^2.0.8",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-scripts": "5.0.1",
@@ -24,7 +26,11 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "no-console": "off",
+      "no-unused-vars": "off"
+    }
   },
   "browserslist": {
     "production": [

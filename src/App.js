@@ -2,49 +2,20 @@
 
 import React, { useState } from "react";
 import axios from "axios";
-import { Utensils, MapPin, Loader2, Star, Phone, Search } from "lucide-react";
-import { Button } from "./components/ui/button";
-import { Input } from "./components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "./components/ui/card";
-import  RestaurantList  from "./components/ui/RestaurantList";
+import RestaurantList from "./components/ui/RestaurantList";
+import RestaurantModal from "./components/ui/RestaurantModal";
 
 export default function RestaurantFinder() {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [lat, setLat] = useState(
-    () => localStorage.getItem("lat") || "37.7786357"
-  );
-  const [lng, setLng] = useState(
-    () => localStorage.getItem("lng") || "-122.3918135"
-  );
-  const [searchTerm, setSearchTerm] = useState(
-    () => localStorage.getItem("searchTerm") || ""
-  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [location, setLocation] = useState("");
+  const [foodType, setFoodType] = useState("");
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
-  const handleLatChange = (e) => {
-    const value = e.target.value;
-    setLat(value);
-    localStorage.setItem("lat", value);
-  };
-
-  const handleLngChange = (e) => {
-    const value = e.target.value;
-    setLng(value);
-    localStorage.setItem("lng", value);
-  };
-
-  const handleSearchTermChange = (e) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    localStorage.setItem("searchTerm", value);
-  };
+  const API_KEY = "d653631d5cmsh0c80dc042132107p1e48e1jsnd35db403294e";
+  const API_HOST = "google-map-scraper1.p.rapidapi.com";
 
   const searchRestaurants = async (e) => {
     e.preventDefault();
@@ -52,134 +23,123 @@ export default function RestaurantFinder() {
     setError(null);
 
     try {
+      const query = `${searchTerm} ${location} ${foodType}`.trim();
       const response = await axios.get(
-        `https://api.spoonacular.com/food/restaurants/search?apiKey=1d26c536698646549c56916dbbdd2999&query=${searchTerm}&lat=${lat}&lng=${lng}`
+        `https://${API_HOST}/api/places/search`,
+        {
+          headers: {
+            "X-Rapidapi-Key": API_KEY,
+            "X-Rapidapi-Host": API_HOST,
+          },
+          params: { query },
+        }
       );
 
-      console.log(response.data);
-
-      // Map the API response to include the correct image URLs
-      const restaurants = response.data.restaurants.map((item) => ({
-        _id: item._id,
-        name: item.name,
-        food_photos: item.food_photos || [],
-        logo_photos: item.logo_photos || [],
-        store_photos: item.store_photos || [],
-        weighted_rating_value: item.weighted_rating_value || 0,
-        dollar_signs: item.dollar_signs || 2,
-        cuisines: item.cuisines || ["Various"],
-        address: item.address || {},
-        phone_number: item.phone_number || "-",
-      }));
-
-      setRestaurants(restaurants);
+      if (response.data && response.data.data && response.data.data.results) {
+        console.log("API Response:", response.data.data.results);
+        setRestaurants(response.data.data.results);
+      } else {
+        setError("No restaurants found. Please try a different search.");
+      }
     } catch (err) {
-      console.error(err);
+      console.error("API Error:", err);
       setError("Failed to fetch restaurants. Please try again.");
     }
     setLoading(false);
   };
 
+  const getRestaurantDetails = async (placeId) => {
+    try {
+      const response = await axios.get(
+        `https://${API_HOST}/api/place/detail`,
+        {
+          headers: {
+            "X-Rapidapi-Key": API_KEY,
+            "X-Rapidapi-Host": API_HOST,
+          },
+          params: { place: placeId },
+        }
+      );
+
+      if (response.data && response.data.data) {
+        setSelectedRestaurant(response.data.data);
+      } else {
+        setError("Failed to fetch restaurant details.");
+      }
+    } catch (err) {
+      console.error("Details API Error:", err);
+      setError("Failed to fetch restaurant details. Please try again.");
+    }
+  };
+
+  const filterRestaurants = (restaurants, searchTerm, location, foodType) => {
+    const lowerCaseTerm = searchTerm.toLowerCase();
+    const lowerCaseLocation = location.toLowerCase();
+    const lowerCaseFoodType = foodType.toLowerCase();
+
+    return restaurants.filter((restaurant) => {
+      const matchesName = restaurant.name && restaurant.name.toLowerCase().includes(lowerCaseTerm);
+      const matchesLocation = restaurant.location && restaurant.location.toLowerCase().includes(lowerCaseLocation);
+      const matchesFoodType = restaurant.foodType && restaurant.foodType.toLowerCase().includes(lowerCaseFoodType);
+      return matchesName || matchesLocation || matchesFoodType;
+    });
+  };
+
+  const filteredRestaurants = filterRestaurants(restaurants, searchTerm, location, foodType);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100">
-      {/* Hero Section */}
-      <header className="bg-gradient-to-r from-blue-600 to-blue-800 shadow-xl">
-        <div className="container mx-auto px-4 py-12">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white text-center mb-4">
-            Foodie Finder
-          </h1>
-          <p className="text-blue-100 text-center text-lg mb-8">
-            Discover amazing restaurants in your area
-          </p>
+    <div className="p-4 max-w-4xl mx-auto">
+      <form
+        onSubmit={searchRestaurants}
+        className="flex flex-col md:flex-row gap-4"
+      >
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search by restaurant name"
+          className="border p-2 rounded flex-1"
+        />
+        <input
+          type="text"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          placeholder="Enter location (e.g., Casablanca)"
+          className="border p-2 rounded flex-1"
+        />
+        <input
+          type="text"
+          value={foodType}
+          onChange={(e) => setFoodType(e.target.value)}
+          placeholder="Enter food type (e.g., Sushi)"
+          className="border p-2 rounded flex-1"
+        />
+        <button
+          type="submit"
+          className="bg-blue-500 text-white rounded px-4 py-2"
+        >
+          Search
+        </button>
+      </form>
 
-          {/* Search Form */}
-          <form onSubmit={searchRestaurants} className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-4 p-4 bg-white rounded-xl shadow-lg">
-              <div className="flex-1 relative">
-                <Utensils className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Search for cuisine or restaurant..."
-                  value={searchTerm}
-                  onChange={handleSearchTermChange}
-                  className="pl-10"
-                />
-              </div>
-              <div className="flex-1 flex gap-2">
-                <div className="flex-1 relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    type="number"
-                    step="any"
-                    placeholder="Latitude (e.g., 37.7786357)"
-                    value={lat}
-                    onChange={handleLatChange}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-                <div className="flex-1 relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  <Input
-                    type="number"
-                    step="any"
-                    placeholder="Longitude (e.g., -122.3918135)"
-                    value={lng}
-                    onChange={handleLngChange}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-              <Button
-                type="submit"
-                className="w-full md:w-auto"
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Search className="mr-2 h-4 w-4" />
-                )}
-                Search
-              </Button>
-            </div>
-          </form>
-        </div>
-      </header>
+      {loading && <p className="mt-4">Loading...</p>}
+      {error && <p className="mt-4 text-red-500">{error}</p>}
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Error Message */}
-        {error && (
-          <div
-            className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-8 rounded"
-            role="alert"
-          >
-            <p className="font-bold">Error</p>
-            <p>{error}</p>
-          </div>
-        )}
+      {filteredRestaurants.length > 0 ? (
+        <RestaurantList
+          restaurants={filteredRestaurants}
+          onSelect={(restaurant) => getRestaurantDetails(restaurant.place_id)}
+        />
+      ) : (
+        <p className="mt-4">No restaurants found matching your search.</p>
+      )}
 
-        {/* Loading State */}
-        {loading && (
-          <div className="text-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-            <p className="mt-2 text-gray-600">Loading restaurants...</p>
-          </div>
-        )}
-
-        {/* Restaurant List */}
-        {!loading && !error && restaurants.length > 0 && (
-          <RestaurantList restaurants={restaurants} />
-        )}
-
-        {/* No Results */}
-        {!loading && !error && restaurants.length === 0 && (
-          <div className="text-center py-8 text-gray-600">
-            No restaurants found. Try adjusting your search.
-          </div>
-        )}
-      </main>
+      {selectedRestaurant && (
+        <RestaurantModal
+          restaurant={selectedRestaurant}
+          onClose={() => setSelectedRestaurant(null)}
+        />
+      )}
     </div>
   );
 }
