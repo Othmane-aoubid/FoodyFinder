@@ -1,6 +1,14 @@
 import React from "react";
 
-const RestaurantList = ({ restaurants, onSelect }) => {
+const RestaurantList = ({
+  restaurants,
+  onSelect,
+  favorites,
+  onToggleFavorite,
+}) => {
+  const isFavorite = (restaurant) =>
+    favorites.some((fav) => fav.id === restaurant.id);
+
   return (
     <div className="mt-8">
       {restaurants.length === 0 ? (
@@ -11,7 +19,7 @@ const RestaurantList = ({ restaurants, onSelect }) => {
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {restaurants.map((restaurant) => (
             <li
-              key={restaurant.id}
+              key={restaurant.id} // Use the unique id from the API
               className="border rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
             >
               <div className="relative">
@@ -30,12 +38,41 @@ const RestaurantList = ({ restaurants, onSelect }) => {
                 <p className="text-sm text-gray-500 mt-2">
                   {restaurant.reviews} reviews
                 </p>
-                <button
-                  onClick={() => onSelect(restaurant)}
-                  className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded w-full transition"
-                >
-                  View Details
-                </button>
+                <p className="text-sm text-gray-500 mt-2">
+                  Phone: {restaurant.phone_number || "N/A"}
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Status: {restaurant.status || "Unknown"}
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  Website:{" "}
+                  {restaurant.website ? (
+                    <a
+                      href={restaurant.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500"
+                    >
+                      Visit
+                    </a>
+                  ) : (
+                    "N/A"
+                  )}
+                </p>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => onToggleFavorite(restaurant)}
+                    className={`flex-1 px-4 py-2 rounded transition ${
+                      isFavorite(restaurant)
+                        ? "bg-green-500 hover:bg-green-600 text-white"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                    }`}
+                  >
+                    {isFavorite(restaurant)
+                      ? "Remove from Favorites"
+                      : "Add to Favorites"}
+                  </button>
+                </div>
               </div>
             </li>
           ))}
